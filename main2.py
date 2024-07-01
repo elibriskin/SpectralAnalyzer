@@ -20,17 +20,20 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationTool
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
+#Set data storage
 data_list = []
 data_labels = []
 
+#Set wavelength range
 wavelength_min = 1480
 wavelength_max = 1515
 class MplCanvas(FigureCanvasQTAgg):
-
+    #Plotting canvas
     def __init__(self, parent=None, width=2, height=4, dpi=0):
         fig = Figure(figsize=(width, height), dpi=dpi)
         self.ax1 = fig.add_subplot(111)
         super(MplCanvas, self).__init__(fig)
+
 class MainWindow(QMainWindow):
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
@@ -72,7 +75,6 @@ class MainWindow(QMainWindow):
         self.setStatusBar(QStatusBar(self))
 
         # Plotting toolbar
-
         plotting_toolbar = NavigationToolbar(self.canvas, self)
         toolbar.addWidget(plotting_toolbar)
 
@@ -216,6 +218,7 @@ class MainWindow(QMainWindow):
     def linearize_data(self):
         n=0
         self.canvas.ax1.cla()
+        #Linearizes all stored spectral signals and replots them
         if len(data_list) > 0:
             for data in data_list:
                 n+=1
@@ -295,6 +298,7 @@ class TemperatureShiftMenu(QDialog):
         super().__init__(parent)
 
         self.setWindowTitle("Calculate Temperature Shift")
+
         # Define plot window
         self.canvas_temp = MplCanvas(self, width=5, height=4, dpi=100)
         self.initialize_canvas = True
@@ -317,6 +321,7 @@ class TemperatureShiftMenu(QDialog):
         self.start1_param.valueChanged.connect(self.update_plot)
         self.end1_param = QDoubleSpinBox(minimum=wavelength_min, maximum=wavelength_max)
         self.end1_param.valueChanged.connect(self.update_plot)
+
         self.layout = QFormLayout()
         self.layout.addRow("Spectral response 1", self.signal1_input)
         self.layout.addRow("Spectral response 2", self.signal2_input)
@@ -332,11 +337,8 @@ class TemperatureShiftMenu(QDialog):
         selected_data2 = self.signal2_input.currentText()
         selected_index2 = data_labels.index(selected_data2)
         data2 = data_list[selected_index2]
-        # data1X = np.array(data1.iloc[1:][0])  # Definition of the array for the wavelenghts in nanometers
-        # data1Y = np.array(data1.iloc[1:][1])
-        # self.canvas_temp.ax1.cla()
-        # self.canvas_temp.ax1.plot(data1X, data1Y)
         n=0
+        #Plot temperature shift of spectral signals
         for data in data_list:
             n += 1
             dataX = np.array(data.iloc[1:][0])
@@ -345,30 +347,21 @@ class TemperatureShiftMenu(QDialog):
             self.canvas_temp.ax1.set_xlabel("Wavelength (nm)")
             self.canvas_temp.ax1.set_ylabel("Transmission (dbm)")
             self.canvas_temp.ax1.legend(loc='lower right')
+
+        #Draw partition lines
         self.line_start = self.canvas_temp.ax1.axvline(self.start1_param.value(), color='black', lw=1, linestyle='--')
         self.line_end = self.canvas_temp.ax1.axvline(self.end1_param.value(), color='black', lw=1, linestyle='--')
         self.canvas_temp.draw()
-        # self.canvas.ax1.draw()
 
 
 
     def update_plot(self):
+        #Adjust partition lines for selecting temperature peaks
         self.line_start.remove()
         self.line_end.remove()
         self.line_start = self.canvas_temp.ax1.axvline(self.start1_param.value(), color='black', lw=1, linestyle='--')
         self.line_end = self.canvas_temp.ax1.axvline(self.end1_param.value(), color='black', lw=1, linestyle='--')
         self.canvas_temp.draw()
-        # selected_data1 = self.signal1_input.currentText()
-        # selected_index1 = data_labels.index(selected_data1)
-        # data1 = data_list[selected_index1]
-        # selected_data2 = self.signal2_input.currentText()
-        # selected_index2 = data_labels.index(selected_data2)
-        # data2 = data_list[selected_index2]
-        # data1X = np.array(data1.iloc[1:][0])  # Definition of the array for the wavelenghts in nanometers
-        # data1Y = np.array(data1.iloc[1:][1])
-        # self.canvas_temp.ax1.cla()
-        # # self.canvas_temp.ax1.plot(data1X, data1Y)
-        # self.canvas_temp.ax1.draw()
 
 
 class FSRMenu(QDialog):
@@ -410,11 +403,13 @@ class FSRMenu(QDialog):
         self.layout.addWidget(self.buttonBox)
         self.setLayout(self.layout)
 
+        #Linearize data
         data_FSR = data_list[0]
         dataX = np.array(data_FSR.iloc[1:][0])
         dataY = np.array(data_FSR.iloc[1:][1])
         dataY_linear = 10 ** (dataY / 10) * 1000
 
+        #Initialize partition lines for spectral peaks
         self.canvas_FSR.ax1.plot(dataX, dataY_linear, label=f'Spectral Response')
         self.line_peak1_start = self.canvas_FSR.ax1.axvline(self.peak1_start.value(), color='black', lw=1, linestyle='--')
         self.line_peak1_end = self.canvas_FSR.ax1.axvline(self.peak1_end.value(), color='black', lw=1, linestyle='--')
@@ -442,6 +437,7 @@ class FSRMenu(QDialog):
         self.canvas_FSR.draw()
 
     def update_plot(self):
+        #Update partition lines
         self.line_peak1_start.remove()
         self.line_peak1_end.remove()
         self.line_peak2_start.remove()
@@ -471,10 +467,6 @@ class ErrorMenu(QDialog):
         self.setLayout(self.layout)
 
 app = QApplication(sys.argv)
-
 window = MainWindow()
-
-# apply_stylesheet(app, theme='light_teal.xml')
 window.show()
-
 app.exec()
