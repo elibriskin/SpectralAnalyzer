@@ -4,10 +4,16 @@ import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
 def cos_func(x, D, E):
+    '''
+    Simple cosine function for fitting.
+    '''
     y = D*np.cos(E*x)
     return y
 
 def compute_error(E):
+    '''
+    Used to compute an error term between fitted curve and actual data.
+    '''
 
     #E corresponds to cosine argument guess
     guess = [1, E]
@@ -20,9 +26,13 @@ def compute_error(E):
     error = np.sum((dataY_norm - fit_cosine)**2)
     return error
 
+#Enable use on arrays
 compute_error = np.vectorize(compute_error)
 
 def spectral_curve_fit(data, start, stop):
+    '''
+    Used to fit a cosine curve to spectral data.
+    '''
     #Make data accessible to compute_error function
     global dataX
     global dataY_norm
@@ -50,6 +60,9 @@ def spectral_curve_fit(data, start, stop):
 
 
 def temperature_shift(data1, data2, start, end):
+    '''
+    Used to calculate temperature shift of two spectral resonance peaks.
+    '''
     dataX_1 = np.array(data1.iloc[1:][0])  # Definition of the array for the wavelenghts in nanometers
     dataY_1 = np.array(data1.iloc[1:][1])  # Definition of the power in dBm
 
@@ -87,6 +100,9 @@ def temperature_shift(data1, data2, start, end):
     plt.show()
 
 def calculate_FSR(data, peak1_start, peak1_end, peak2_start, peak2_end):
+    '''
+    Used to calculate the free spectral range between two resonance peaks.
+    '''
 
     dataX = np.array(data.iloc[1:][0])  # Definition of the array for the wavelenghts in nanometers
     dataY = np.array(data.iloc[1:][1])  # Definition of the power in dBm

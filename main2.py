@@ -28,6 +28,9 @@ data_labels = []
 wavelength_min = 1480
 wavelength_max = 1515
 class MplCanvas(FigureCanvasQTAgg):
+    '''
+    This constitutes the main plotting canvas for spectral data.
+    '''
     #Plotting canvas
     def __init__(self, parent=None, width=2, height=4, dpi=0):
         fig = Figure(figsize=(width, height), dpi=dpi)
@@ -35,6 +38,9 @@ class MplCanvas(FigureCanvasQTAgg):
         super(MplCanvas, self).__init__(fig)
 
 class MainWindow(QMainWindow):
+    '''
+    This is the main window of the application. It hosts the navigation, toolbar, and main plot windows.
+    '''
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
 
@@ -96,6 +102,7 @@ class MainWindow(QMainWindow):
         FSR = QAction("&FSR...", self)
         FSR.triggered.connect(self.calculate_FSR)
 
+        #Navigation menu
         menu = self.menuBar()
 
         file_menu = menu.addMenu("&File")
@@ -109,6 +116,9 @@ class MainWindow(QMainWindow):
         analyze_menu.addAction(FSR)
 
     def import_data(self):
+        '''
+        This method is used to import spectral response data. It accepts csv files only.
+        '''
         menu = FileImportMenu()
         if menu.exec():
             if self.initialize_canvas == True:
@@ -136,6 +146,9 @@ class MainWindow(QMainWindow):
             self.canvas.draw()
 
     def fit_spectral_data(self):
+        '''
+        This method accepts a spectral response and will fit a cosine curve to the selected data.
+        '''
         if len(data_list) == 0:
             error_window = ErrorMenu("No data available!")
             error_window.exec()
@@ -163,6 +176,9 @@ class MainWindow(QMainWindow):
             plt.show()
 
     def calculate_temperature_shift(self):
+        '''
+        This method calculates the temperature shift of two spectral resonance peaks in nanometers.
+        '''
         if len(data_list) < 2:
             error_window = ErrorMenu("Must have at least two spectral response signals!")
             error_window.exec()
@@ -187,9 +203,14 @@ class MainWindow(QMainWindow):
             selected_data2 = menu.signal2_input.currentText()
             selected_index2 = data_labels.index(selected_data2)
             data2 = data_list[selected_index2]
+
+            #Calculates and plots temperature shift distance
             temperature_shift(data1, data2, menu.start1_param.value(), menu.end1_param.value())
 
     def calculate_FSR(self):
+        '''
+        This method calculates the free spectral range of a spectral response.
+        '''
         if len(data_list) == 0:
             error_window = ErrorMenu("No data available!")
             error_window.exec()
@@ -207,17 +228,30 @@ class MainWindow(QMainWindow):
             selected_data = menu.signal_input.currentText()
             selected_index = data_labels.index(selected_data)
             data = data_list[selected_index]
+
+            #Calculate FSR between two resonance peaks
             calculate_FSR(data, menu.peak1_start.value(), menu.peak1_end.value(), menu.peak2_start.value(), menu.peak2_end.value())
     def clear_canvas(self):
+        '''
+        This method clears the plotting canvas.
+        '''
+
+        #Clears existing spectral data
         data_list.clear()
         data_labels.clear()
+
+        #Reset canvas
         self.data_index = 0
         self.canvas.ax1.cla()
         self.canvas.draw()
 
     def linearize_data(self):
+        '''
+        This method converts spectral data from dBm into microwatts.
+        '''
         n=0
         self.canvas.ax1.cla()
+
         #Linearizes all stored spectral signals and replots them
         if len(data_list) > 0:
             for data in data_list:
@@ -232,6 +266,9 @@ class MainWindow(QMainWindow):
                 self.canvas.draw()
 
 class FileImportMenu(QDialog):
+    '''
+    This menu is used to import spectral response data.
+    '''
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -248,6 +285,7 @@ class FileImportMenu(QDialog):
 
         self.file_label = QLabel("")
 
+        #If this is checked, new spectral data will be plotted on top of previous data.
         self.overlay = QCheckBox("Overlay new data")
 
         self.layout = QFormLayout()
@@ -258,6 +296,9 @@ class FileImportMenu(QDialog):
         self.setLayout(self.layout)
 
     def get_files(self):
+        '''
+        This method gets file data and updates labels.
+        '''
         dlg = QFileDialog()
         filenames = QStringListModel()
 
@@ -266,6 +307,9 @@ class FileImportMenu(QDialog):
             self.file_label.setText(filenames[0])
 
 class CurveFitMenu(QDialog):
+    '''
+    This menu is used to fit a selected spectral response with a consine curve.
+    '''
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -294,6 +338,10 @@ class CurveFitMenu(QDialog):
         self.setLayout(self.layout)
 
 class TemperatureShiftMenu(QDialog):
+    '''
+    This menu is used to calculate the temperature shift between two spectral responses. It features a partition selector
+    that users use to select the partition points.
+    '''
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -331,11 +379,16 @@ class TemperatureShiftMenu(QDialog):
         self.layout.addWidget(self.buttonBox)
         self.setLayout(self.layout)
 
+        #Select data for comparison
         selected_data1 = self.signal1_input.currentText()
         selected_index1 = data_labels.index(selected_data1)
+
+        #Spectral Response 1
         data1 = data_list[selected_index1]
         selected_data2 = self.signal2_input.currentText()
         selected_index2 = data_labels.index(selected_data2)
+
+        # Spectral Response 2
         data2 = data_list[selected_index2]
         n=0
         #Plot temperature shift of spectral signals
@@ -356,7 +409,9 @@ class TemperatureShiftMenu(QDialog):
 
 
     def update_plot(self):
-        #Adjust partition lines for selecting temperature peaks
+        '''
+        Adjust partition lines for selecting temperature peaks
+        '''
         self.line_start.remove()
         self.line_end.remove()
         self.line_start = self.canvas_temp.ax1.axvline(self.start1_param.value(), color='black', lw=1, linestyle='--')
@@ -365,6 +420,9 @@ class TemperatureShiftMenu(QDialog):
 
 
 class FSRMenu(QDialog):
+    '''
+    This menu is used to calculate the free spectral range of a spectral response.
+    '''
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -422,13 +480,17 @@ class FSRMenu(QDialog):
         self.canvas_FSR.draw()
 
     def select_signal(self):
-        # Select signal from stored data signal collection
+        '''
+        Select signal from stored data signal collection
+        '''
         selected_data = self.signal_input.currentText()
         selected_index = data_labels.index(selected_data)
         data_FSR = data_list[selected_index]
         dataX = np.array(data_FSR.iloc[1:][0])
         dataY = np.array(data_FSR.iloc[1:][1])
         dataY_linear = 10 ** (dataY / 10) * 1000
+
+        #Update plot with selected response
         self.canvas_FSR.ax1.cla()
         self.canvas_FSR.ax1.plot(dataX, dataY_linear, label=f'{selected_data}')
         self.canvas_FSR.ax1.set_xlabel("Wavelength (nm)")
@@ -450,6 +512,9 @@ class FSRMenu(QDialog):
 
 
 class ErrorMenu(QDialog):
+    '''
+    This is an all-purpose error menu, mostly used for validation issues.
+    '''
     def __init__(self, message):
         super().__init__()
 
